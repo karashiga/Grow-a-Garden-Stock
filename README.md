@@ -33,7 +33,7 @@ pip install requests beautifulsoup4
 Run the notifier script with:
 
 ```bash
-python grow_garden_notifier.py
+python main.py
 ```
 
 ---
