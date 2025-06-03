@@ -25,7 +25,7 @@ It displays color-coded stock lists in your terminal and sends push notification
 
 Install dependencies with:  
 ```bash
-pip install requests beautifulsoup4
+pip install -r requirements.txt
 ```
 ---
 ## 🚀 Usage
