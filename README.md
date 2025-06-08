@@ -12,7 +12,7 @@ It displays color-coded stock lists in your terminal and sends push notification
 
 - 📢 Downtime Notifications: Sends an ntfy.sh push notification if the service is down, limited to one notification per hour to avoid spamming.
 
-- 🛠 Status Tracking: Maintains service_was_down and last_down_notification_time flags to manage alerting behavior.
+- 🛠 Status Tracking: Maintains `service_was_down` and `last_down_notification_time` flags to manage alerting behavior.
 
 - ✅ Improved Reliability: Ensures the script doesn't crash on connection errors and continues checking periodically.
   
