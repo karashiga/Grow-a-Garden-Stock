@@ -5,6 +5,9 @@ import time
 import sys  
 import os  
 
+service_was_down = False
+last_down_notification_time = None
+
 # Color map dictionary
 color_map = {
     "Carrot": "4CAF50", "Strawberry": "4CAF50", "Blueberry": "4CAF50", "Orange": "4CAF50",
@@ -82,8 +85,8 @@ color_map = {
 
 # Items to notify about (add the ones you want notifications for)
 notify_items = [
-    "Honey Sprinkler", "Bee Egg", "Sunflower", "Nectarine", "Hive Fruit", "Dragon", "Mango", "Grape", "Mushroom", "Pepper", "Cacao",
-    "Beanstalk", "Godly", "Bug Egg", "Legendary Egg", "Mythical Egg",
+    "Cactus", "Melon", "Ember Lily", "Friendship Pot", "Honey Sprinkler", "Bee Egg", "Sunflower", "Nectarine", "Hive Fruit", "Dragon", "Mango", "Grape", "Mushroom", "Pepper", "Cacao",
+    "Beanstalk", "Godly", "Bug Egg", "Mythical Egg",
     "Bee Crate", "Stone Pillar", "Bird Bath", "Lamp Post", "Tractor", "Master Sprinkler", "Lightning Rod"
 ]
 
@@ -112,63 +115,102 @@ def colorize_text(text, rgb_hex):
     reset_code = '\033[0m'
     return f"{color_code}{text}{reset_code}"
 
+last_ntfy_limit_time = None
+ntfy_on_cooldown = False
+
 def send_push_notification(title, message):
-    """Send push notification via ntfy.sh"""
+    global last_ntfy_limit_time, ntfy_on_cooldown
     try:
+        if ntfy_on_cooldown and datetime.now() - last_ntfy_limit_time < timedelta(minutes=60):
+            print("⚠️ Skipped notification: ntfy.sh is on cooldown")
+            return
+
         url = "https://ntfy.sh/gag-jim"
-        requests.post(url, data=message, headers={"Title": title})
-        print(f"Notification sent: {title} - {message}")
+        response = requests.post(url, data=message, headers={"Title": title})
+
+        if response.status_code == 429:
+            print("❌ ntfy.sh rate limit hit!")
+            last_ntfy_limit_time = datetime.now()
+            ntfy_on_cooldown = True
+        else:
+            print(f"✅ Notification sent: {title} - {message}")
+            ntfy_on_cooldown = False
+            last_ntfy_limit_time = None
     except Exception as e:
         print(f"Failed to send notification: {e}")
 
 def scrape_stock():  
-    global previous_stock
+    global previous_stock, service_was_down, last_down_notification_time
     current_stock = set()
     items_to_notify = []
     
     clear_screen()  
-    now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  
+    now = datetime.now()
+    now_str = now.strftime('%Y-%m-%d %H:%M:%S')  
     print_border(f" STOCK CHECK - {now_str} ")  
   
     url = "https://vulcanvalues.com/grow-a-garden/stock"  
     headers = {"User-Agent": "Mozilla/5.0"}  
-    response = requests.get(url, headers=headers)  
-    soup = BeautifulSoup(response.text, "html.parser")  
-  
-    for header in soup.find_all("h2"):  
-        if header.text.strip().endswith("STOCK"):  
-            ul = header.find_next_sibling("ul")  
-            if ul:  
-                print(f"\n╭── {header.text.strip()} ──╮")  
-                for li in ul.find_all("li"):  
-                    item_text = li.text.strip()
-                    current_stock.add(item_text)
-                    
-                    # Check if this is a new item we want to notify about
-                    for notify_item in notify_items:
-                        if notify_item.lower() in item_text.lower() and item_text not in previous_stock:
-                            items_to_notify.append(item_text)
-                    
-                    # Find matching color in color_map
-                    item_color = None
-                    for item_name, color in color_map.items():
-                        if item_name.lower() in item_text.lower():
-                            item_color = color
-                            break
-                    
-                    if item_color:
-                        colored_item = colorize_text(f"│ - {item_text}", item_color)
-                        print(colored_item)
-                    else:
-                        print(f"│ - {item_text}")
-                print("╰" + "─" * (len(header.text.strip()) + 6) + "╯")  
-    
-    # Send notifications for new items
-    if items_to_notify:
-        for item in items_to_notify:
-            send_push_notification("Grow A Garden: New Stock", f"{item} is now in stock!")
-    
-    previous_stock = current_stock
+
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code != 200:
+            raise Exception("Non-200 status code")
+
+        soup = BeautifulSoup(response.text, "html.parser")  
+
+        any_stock_found = False
+        for header in soup.find_all("h2"):  
+            if header.text.strip().endswith("STOCK"):  
+                ul = header.find_next_sibling("ul")  
+                if ul:  
+                    any_stock_found = True
+                    print(f"\n╭── {header.text.strip()} ──╮")  
+                    for li in ul.find_all("li"):  
+                        item_text = li.text.strip()
+                        current_stock.add(item_text)
+                        
+                        # Check if this is a new item we want to notify about
+                        for notify_item in notify_items:
+                            if notify_item.lower() in item_text.lower() and item_text not in previous_stock:
+                                items_to_notify.append(item_text)
+                        
+                        # Find matching color in color_map
+                        item_color = None
+                        for item_name, color in color_map.items():
+                            if item_name.lower() in item_text.lower():
+                                item_color = color
+                                break
+                        
+                        if item_color:
+                            colored_item = colorize_text(f"│ • {item_text}", item_color)
+                            print(colored_item)
+                        else:
+                            print(f"│ • {item_text}")
+                    print("╰" + "─" * (len(header.text.strip()) + 6) + "╯")
+
+        if not any_stock_found:
+            raise Exception("No stock data found")
+
+        # Service is back
+        if service_was_down:
+            send_push_notification("Grow A Garden: Service Restored", "The notifier service is now back online.")
+            service_was_down = False
+            last_down_notification_time = None
+
+        # Notify new stock items
+        if items_to_notify:
+            for item in items_to_notify:
+                send_push_notification("Grow A Garden: New Stock", f"{item} is now in stock!")
+
+        previous_stock = current_stock
+
+    except Exception as e:
+        print(f"❌ Failed to fetch stock data: {e}")
+        if not service_was_down or (last_down_notification_time is None or (datetime.now() - last_down_notification_time).total_seconds() >= 3600):
+            send_push_notification("Grow A Garden: Service Down", "Notifier service is currently down or unreachable. We'll back later.")
+            last_down_notification_time = datetime.now()
+        service_was_down = True
   
 def wait_until_next_5k_plus_1():  
     now = datetime.now()  
@@ -189,7 +231,7 @@ def wait_until_next_5k_plus_1():
         sys.stdout.flush()  
         time.sleep(1)  
     print()  
-  
+
 while True:  
     scrape_stock()  
     wait_until_next_5k_plus_1()
