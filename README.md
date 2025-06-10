@@ -6,7 +6,7 @@ A script that monitors item stock from
 It displays color-coded stock lists in your terminal and sends push notifications via [ntfy.sh](https://ntfy.sh).
 
 ---
-## New Updates (v2) | June 9, 2025
+## New Updates (v1.1) | June 9, 2025
 
 - 🔔 Downtime Detection: Added logic to detect if the target website (vulcanvalues.com) is down or unreachable.
 
