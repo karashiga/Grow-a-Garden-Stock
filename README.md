@@ -6,6 +6,10 @@ A script that monitors item stock from
 It displays color-coded stock lists in your terminal and sends push notifications via [ntfy.sh](https://ntfy.sh).
 
 ---
+
+New Version: [click here](https://github.com/Jimqr/Grow-a-Garden-Notifier)
+
+---
 ## New Updates (v1.1) | June 9, 2025
 
 - 🔔 Downtime Detection: Added logic to detect if the target website (vulcanvalues.com) is down or unreachable.
