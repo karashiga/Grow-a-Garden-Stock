@@ -208,7 +208,7 @@ def scrape_stock():
     except Exception as e:
         print(f"❌ Failed to fetch stock data: {e}")
         if not service_was_down or (last_down_notification_time is None or (datetime.now() - last_down_notification_time).total_seconds() >= 3600):
-            send_push_notification("Grow A Garden: Service Down", "Notifier service is currently down or unreachable. We'll back later.")
+            send_push_notification("Grow A Garden: Service Down", "Notifier service is currently down or unreachable. Please use our new topicname: gag2-jim")
             last_down_notification_time = datetime.now()
         service_was_down = True
   
