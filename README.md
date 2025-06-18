@@ -8,7 +8,7 @@ It displays color-coded stock lists in your terminal and sends push notification
 ---
 New GAG notifier is now available! (Open Source)
 
-New notifer: [click here](https://github.com/Jimqr/Grow-a-Garden-Notifier)
+New notifier: [click here](https://github.com/Jimqr/Grow-a-Garden-Notifier)
 
 ---
 ## New Updates (v1.1) | June 9, 2025
