@@ -125,7 +125,7 @@ def send_push_notification(title, message):
             print("⚠️ Skipped notification: ntfy.sh is on cooldown")
             return
 
-        url = "https://ntfy.sh/gag-jim"
+        url = "https://ntfy.sh/ramon"
         response = requests.post(url, data=message, headers={"Title": title})
 
         if response.status_code == 429:
